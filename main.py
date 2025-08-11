@@ -10,7 +10,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse, FileResponse
 
 SEPERATORS = ["_", "-", ".", "$", "*", "%", "^", "!"]
-EXTENSIONS = [".exe", ".7z", ".tar", ".dmg", ".clickme" , ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".docm", ".xlsm", ".pptm", ".com", ".scr", ".msi", ".vbs", ".js", ".wsf", ".ps1", ".lnk"]
+EXTENSIONS = [".exe", ".7z", ".tar", ".dmg", ".clickme" , ".doc", ".docx", ".xls", ".xlsx", 
+              ".ppt", ".pptx", ".docm", ".xlsm", ".pptm", ".com", ".scr", ".msi", ".vbs", 
+              ".js", ".wsf", ".ps1", ".lnk"]
 
 # ============== Setup ===============
 
