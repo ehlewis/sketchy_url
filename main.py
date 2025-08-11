@@ -123,7 +123,7 @@ async def create_sketchy_url(body: Any = Body(...)):
     sketchy = create_sketchy_path(wordlist)
     db_added = add_link_to_db(sketchy,body["url"])
     if db_added == "ok":
-        return {"status": "/"+sketchy}
+        return {"status": "created", "url": "/"+sketchy}
     return {"status": "error"}
 
 
