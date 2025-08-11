@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>User Info</title>
+  <style>
+    body { font-family: monospace; background: #1e1e1e; color: #d4d4d4; padding: 20px; }
+    h1 { color: #ffffff; }
+    pre { background: #2d2d2d; padding: 20px; border-radius: 8px; overflow: auto; }
+  </style>
+</head>
+<body>
+  <h1>User Information</h1>
+  <pre id="info">Gathering info...</pre>
+
+  <script>
+    async function getUserInfo() {
+      const info = {};
+
+      // Fetch client info from server
+      try {
+        const serverRes = await fetch('/clientinfo');
+        const serverData = await serverRes.json();
+        info.serverReportedIP = serverData.ip;
+        info.requestHeaders = serverData.headers;
+      } catch (e) {
+        info.serverReportedIP = "Unavailable";
+        info.requestHeaders = "Error fetching headers";
+      }
+
+      // Client-side info
+      info.userAgent = navigator.userAgent;
+      info.language = navigator.language;
+      info.platform = navigator.platform;
+      info.cookieEnabled = navigator.cookieEnabled;
+      info.deviceMemory = navigator.deviceMemory + " GB";
+      info.hardwareConcurrency = navigator.hardwareConcurrency + " cores";
+      info.plugins = [...navigator.plugins].map(p => p.name);
+      info.touchSupport = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+      info.screenResolution = `${screen.width} x ${screen.height}`;
+      info.colorDepth = screen.colorDepth;
+      info.pixelRatio = window.devicePixelRatio;
+      info.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+      // Geolocation (optional)
+      try {
+        const pos = await new Promise((resolve, reject) =>
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 })
+        );
+        info.geolocation = {
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          accuracy: pos.coords.accuracy + " m"
+        };
+      } catch (err) {
+        info.geolocation = "Denied or unavailable";
+      }
+
+      // Display results
+      document.getElementById("info").textContent = JSON.stringify(info, null, 2);
+    }
+
+    getUserInfo();
+  </script>
+</body>
+</html>
