@@ -80,10 +80,6 @@ async def read_index():
 async def read_index():
     return FileResponse(os.path.join("static", "qr.html"))
 
-@app.get("/sketchy_url.html")
-async def read_index():
-    return FileResponse(os.path.join("static", "sketchy_url.html"))
-
 @app.get("/clientinfo")
 def clientinfo(request):
     client_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
