@@ -3,3 +3,4 @@ jsonify
 uvicorn
 requests
 apscheduler
+fastapi-throttle
