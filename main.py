@@ -26,8 +26,8 @@ print("[+] Database connection established")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     scheduler = AsyncIOScheduler()
-    # repeat task every 10 seconds
-    scheduler.add_job(func=db.clean_db, trigger='interval', days=7)
+    # repeat task every day
+    scheduler.add_job(func=db.clean_db, trigger='interval', days=1)
     scheduler.start()
     yield
     scheduler.stop()
@@ -35,8 +35,8 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 scheduler = AsyncIOScheduler()
 
-# Limit to 10 requests per minute
-limiter = RateLimiter(times=10, seconds=60)
+# Limit to 5 requests per minute
+limiter = RateLimiter(times=5, seconds=60)
 
 # ============== Helpers =============
 def read_file(filename):
