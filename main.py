@@ -5,8 +5,9 @@ import sqlite3
 import jsonify
 import db_functions
 from typing import Any
+from fastapi_throttle import RateLimiter
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request, status, Body
+from fastapi import FastAPI, Depends, status, Body
 from fastapi.responses import RedirectResponse, FileResponse
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
@@ -25,13 +26,17 @@ print("[+] Database connection established")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     scheduler = AsyncIOScheduler()
-    # repeat task every 10 seconds
-    scheduler.add_job(func=db.clean_db, trigger='interval', days=7)
+    # repeat task every day
+    scheduler.add_job(func=db.clean_db, trigger='interval', days=1)
     scheduler.start()
     yield
+    scheduler.stop()
 
 app = FastAPI(lifespan=lifespan)
 scheduler = AsyncIOScheduler()
+
+# Limit to 5 requests per minute
+limiter = RateLimiter(times=5, seconds=60)
 
 # ============== Helpers =============
 def read_file(filename):
@@ -89,7 +94,7 @@ def clientinfo(request):
         "headers": headers
     })
 
-@app.post("/create_url")
+@app.post("/create_url", dependencies=[Depends(limiter)])
 async def create_sketchy_url(body: Any = Body(...)):
     sketchy = create_sketchy_path(wordlist)
     db_added = db.add_link_to_db(sketchy,body["url"])
