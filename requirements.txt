@@ -2,3 +2,4 @@ fastapi
 jsonify
 uvicorn
 requests
+apscheduler

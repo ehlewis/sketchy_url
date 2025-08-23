@@ -1,1 +1,151 @@
-<h1>Hi</h1>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sketchy URL Shortener</title>
+  <style>
+    :root{--bg:#0b0f12;--panel:#0f1720;--accent:#33ff77;--muted:#9aa6b2}
+    html,body{height:100%;margin:0;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', monospace;background:linear-gradient(180deg,#020306 0%,#071021 100%);color:#e6f0ea}
+    .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+    .card{width:100%;max-width:720px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);padding:28px;border-radius:12px;box-shadow:0 6px 30px rgba(0,0,0,0.6)}
+    h1{margin:0 0 12px;font-size:20px;color:var(--accent)}
+    p.lead{margin:0 0 18px;color:var(--muted);font-size:13px}
+    form{display:flex;gap:8px}
+    input[type=text]{flex:1;padding:12px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:#e6f0ea;font-size:14px}
+    button{padding:10px 14px;border-radius:8px;border:none;background:var(--accent);color:#042018;font-weight:700;cursor:pointer}
+    .result{margin-top:18px;padding:14px;border-radius:8px;background:rgba(0,0,0,0.35);color:var(--muted);display:flex;align-items:center;gap:12px}
+    .result a{color:var(--accent);font-weight:700;text-decoration:none}
+    .small{font-size:13px}
+    .error{color:#ff6b6b}
+    .copy{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);padding:8px 10px;border-radius:6px;cursor:pointer}
+    .footer{margin-top:16px;text-align:center}
+    .footer a{color:var(--muted);text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+    .footer svg{fill:var(--muted);width:24px;height:24px;transition:fill 0.2s ease}
+    .footer a:hover svg{fill:var(--accent)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Sketchy URL Shortener</h1>
+      <p class="lead">Paste a link below and get a sketchy-looking URL.</p>
+
+      <form id="createForm">
+        <input id="inputUrl" type="text" placeholder="https://example.com/some/long/path" required />
+        <button id="submitBtn">Create</button>
+      </form>
+
+      <div id="status" class="small" style="margin-top:12px;color:var(--muted)"></div>
+
+      <div id="resultArea" style="display:none">
+        <div class="result" id="resultBox">
+          <div>
+            <div style="font-size:13px;color:var(--muted)">Your sketchy link</div>
+            <div style="margin-top:6px"><a id="skLink" href="#" target="_blank" rel="noopener noreferrer"></a></div>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+            <button class="copy" id="copyBtn">Copy</button>
+            <button class="copy" id="openBtn">Open</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <a href="https://github.com/ehlewis" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+          <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 
+              6.53 5.47 7.59.4.07.55-.17.55-.38 
+              0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52
+              0-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 
+              2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95
+              0-.87.31-1.59.82-2.15-.08-.2-.36-1.01.08-2.11 
+              0 0 .67-.21 2.2.82A7.65 7.65 0 0 1 8 4.69c.68.003 1.36.09 
+              2 .26 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.91.08 
+              2.11.51.56.82 1.27.82 2.15 0 3.07-1.87 
+              3.75-3.65 3.95.29.25.54.73.54 1.48 
+              0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 
+              8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('createForm');
+    const input = document.getElementById('inputUrl');
+    const status = document.getElementById('status');
+    const resultArea = document.getElementById('resultArea');
+    const skLink = document.getElementById('skLink');
+    const copyBtn = document.getElementById('copyBtn');
+    const openBtn = document.getElementById('openBtn');
+
+    // Change this if your API is running elsewhere (including port)
+    const API_ENDPOINT = '/create_url';
+
+    function showStatus(msg, isError=false) {
+      status.textContent = msg;
+      status.style.color = isError ? 'var(--accent)' : 'var(--muted)';
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      resultArea.style.display = 'none';
+      showStatus('Sending...', false);
+
+      const originalUrl = input.value.trim();
+      if (!originalUrl) { showStatus('Please enter a URL.', true); return; }
+
+      try {
+        const resp = await fetch(API_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: originalUrl })
+        });
+
+        if (!resp.ok) {
+          const text = await resp.text();
+          showStatus('Server error: ' + resp.status + ' ' + text, true);
+          return;
+        }
+
+        const data = await resp.json();
+        // Expected format: {"status": "created", "url": "/NEW_URL"}
+        if (!data || !data.url) {
+          showStatus('Unexpected response from server', true);
+          return;
+        }
+
+        // If server returned a relative path, prefix with current origin
+        const returned = data.url;
+        const full = returned.startsWith('http') ? returned : (window.location.origin.replace(/\/$/, '') + returned);
+
+        skLink.href = full;
+        skLink.textContent = full;
+
+        resultArea.style.display = '';
+        showStatus('Created!', false);
+
+      } catch (err) {
+        console.error(err);
+        showStatus('Network or parsing error: ' + err.message, true);
+      }
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      const txt = skLink.href;
+      try {
+        await navigator.clipboard.writeText(txt);
+        showStatus('Copied to clipboard');
+      } catch (e) {
+        showStatus('Copy failed: ' + e.message, true);
+      }
+    });
+
+    openBtn.addEventListener('click', () => {
+      window.open(skLink.href, '_blank', 'noopener');
+    });
+  </script>
+</body>
+</html>
